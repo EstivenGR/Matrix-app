@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: accesscore-backend
+    ports:
+      - "8888:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - mysql
+    restart: always
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - accesscore-net
+
+  mysql:
+    image: mysql:8
+    container_name: accesscore-mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    ports:
+      - "3489:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - accesscore-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p1234"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  accesscore-net:
+
+volumes:
+  mysql-data:
